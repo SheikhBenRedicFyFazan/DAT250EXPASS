@@ -8,6 +8,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import no.hvl.pollapp.service.EventPublisher;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -17,9 +18,13 @@ public class PollController {
     @Autowired
     private PollManager pollManager;
 
+    @Autowired
+    private EventPublisher eventPublisher;
+
     @PostMapping
     public ResponseEntity<Poll> createPoll(@RequestBody Poll poll) {
         Poll created = pollManager.addPoll(poll);
+        eventPublisher.publishEvent("{\"type\":\"PollCreated\",\"pollId\":" + created.getId() + "}");
         return ResponseEntity.ok(created);
     }
 
@@ -47,6 +52,7 @@ public class PollController {
     public ResponseEntity<Vote> voteOnPoll(@PathVariable Long pollId, @RequestBody Vote vote) {
         vote.setPollId(pollId);
         Vote result = pollManager.addOrUpdateVote(vote);
+        eventPublisher.publishEvent("{\"type\":\"VoteCast\",\"pollId\":" + pollId + ",\"voteId\":" + result.getId() + "}");
         return ResponseEntity.ok(result);
     }
 
@@ -54,4 +60,6 @@ public class PollController {
     public List<Vote> getVotesForPoll(@PathVariable Long pollId) {
         return pollManager.getVotesForPoll(pollId);
     }
+
+
 }
